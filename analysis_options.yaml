@@ -1,0 +1,25 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    always_declare_return_types: true
+    avoid_slow_async_io: true
+    avoid_types_on_closure_parameters: true
+    avoid_unused_constructor_parameters: true
+    avoid_void_async: true
+    directives_ordering: true
+    omit_local_variable_types: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: true
+    prefer_interpolation_to_compose_strings: true
+    prefer_relative_imports: true
+    prefer_single_quotes: true
+    sort_constructors_first: true
+    sort_pub_dependencies: true
+    sort_unnamed_constructors_first: true
+    unawaited_futures: true
+    unnecessary_await_in_return: true
+    use_colored_box: true
+    use_decorated_box: true
+    use_named_constants: true
+    use_super_parameters: true
