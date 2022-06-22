@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "132624171351",
+    "project_id": "todoappforecho",
+    "storage_bucket": "todoappforecho.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:132624171351:android:d28650d3e89c4246f9fe12",
+        "android_client_info": {
+          "package_name": "jp.co.demia.flutter_todo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "132624171351-218t548jskisth2d0hmgbau60n3lqlja.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9T0fWQxB_5CaUqlVq0H0a2xbGSPZnNE4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "132624171351-218t548jskisth2d0hmgbau60n3lqlja.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
