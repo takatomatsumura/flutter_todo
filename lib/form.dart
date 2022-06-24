@@ -27,7 +27,10 @@ class FormPage extends StatelessWidget {
             color: Colors.white,
             iconSize: 40,
             onPressed: () {
-              Navigator.pushNamed(context, '/setting');
+              Navigator.pushNamed(
+                context,
+                '/setting',
+              );
             },
           ),
         ],

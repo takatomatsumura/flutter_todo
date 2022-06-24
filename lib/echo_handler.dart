@@ -2,12 +2,25 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 
+const domain = '10.0.2.2';
+const apiURL = 'http://$domain:8000';
+
 class DrfDatabase {
   final dio = Dio();
   List datalist = [];
   var data;
-  // final domain = '10.0.2.2:8000';
-  final domain = '18.180.75.44';
+  // static const domain = '10.0.0.2:8000';
+  // static const domain = '18.180.75.44';
+
+  Future demo() async {
+    try {
+      final response = await dio.get('$apiURL/jsonRes');
+      print(response.data);
+      return response;
+    } catch (e) {
+      print(e);
+    }
+  }
 
   Future gettodolist(int index, String uuid) async {
     final response = await dio.get(
@@ -24,7 +37,6 @@ class DrfDatabase {
     return jsonlist;
   }
 
-  // ignore: type_annotate_public_apis
   Future<Map<String, dynamic>> retrievetodo(var index) async {
     final responce = await dio.get(
       'http://$domain/todos/retrieve/$index',
@@ -33,7 +45,6 @@ class DrfDatabase {
     return data;
   }
 
-  // ignore: type_annotate_public_apis
   Future createtodo(String title, String date, int owner) async {
     // var _requestimage;
     // if (_image != null) {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'detail.dart';
+import 'echo_handler.dart';
 import 'firebase_options.dart';
 import 'form.dart';
 import 'homepage.dart';
@@ -50,7 +51,8 @@ Future<void> main() async {
   // if (initialbool == false) {
   //   await Notificationoperation().notification();
   // }
-  runApp(const MyApp());
+  await DrfDatabase().demo();
+  runApp(Container());
 }
 
 class MyApp extends StatelessWidget {
