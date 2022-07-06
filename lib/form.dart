@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'api_root.dart';
 import 'echo_handler.dart';
-import 'notification_handler.dart';
+// import 'notification_handler.dart';
+import 'todo.dart';
 
 var _id;
 
@@ -50,47 +55,48 @@ class _FormPageWidget extends StatefulWidget {
 class _FormPageStateWidget extends State<_FormPageWidget> {
   final _formkey = GlobalKey<FormState>();
   final titleController = TextEditingController();
+  final contentController = TextEditingController();
   final dateController = TextEditingController();
   final timeController = TextEditingController();
+  final imagePicker = ImagePicker();
+  XFile? image;
   final datetimeformat = DateFormat('y-M-d HH:mm');
-  String minute = '';
-  String hour = '';
-  String datestring = '';
-  String timestring = '';
-  // var _image;
-  // final picker = ImagePicker();
   String uuid = '';
-  String detailimage = '';
   var _todouser;
-  var _detail;
-  final dateformat = DateFormat('y-M-d');
-  final timeformat = DateFormat('HH:mm');
-  // var _requestimage;
-  // String? _imageurl;
+  Todo? todo;
+  Map<String, dynamic> formValue = {};
+  static final dateformat = DateFormat('y-M-d');
+  static final timeformat = DateFormat('HH:mm');
 
-  // Future _getImagecamera() async {
-  //   final pickedFile = await picker.pickImage(source: ImageSource.camera);
-  //   setState(
-  //     () {
-  //       if (pickedFile != null) {
-  //         _image = File(pickedFile.path);
-  //         _requestimage = pickedFile.path;
-  //       }
-  //     },
-  //   );
-  // }
+  Future<XFile?> getImageCamera() async {
+    image = await imagePicker.pickImage(source: ImageSource.camera);
+    if (image is XFile) {
+      setState(
+        () {
+          final selectedImage = File(image!.path);
+          formValue['image'] = MultipartFile(
+            'picture',
+            selectedImage.readAsBytes().asStream(),
+            selectedImage.lengthSync(),
+            filename: selectedImage.path.split('/').last,
+          );
+        },
+      );
+    }
+    return image;
+  }
 
-  // Future _getImagegallery() async {
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-  //   setState(
-  //     () {
-  //       if (pickedFile != null) {
-  //         _image = File(pickedFile.path);
-  //         _requestimage = pickedFile.path;
-  //       }
-  //     },
-  //   );
-  // }
+  Future<XFile?> getImageGararry() async {
+    image = await imagePicker.pickImage(source: ImageSource.gallery);
+    if (image is XFile) {
+      setState(
+        () {
+          formValue['image'] = File(image!.path);
+        },
+      );
+    }
+    return image;
+  }
 
   @override
   void initState() {
@@ -98,19 +104,14 @@ class _FormPageStateWidget extends State<_FormPageWidget> {
     if (_id != '') {
       Future(
         () async {
-          _detail = await DrfDatabase().retrievetodo(_id);
-          titleController.text = _detail['title'];
-          dateController.text = dateformat.format(
-            DateTime.parse(_detail['date']).add(
-              const Duration(hours: 9),
-            ),
-          );
-          timeController.text = timeformat.format(
-            DateTime.parse(_detail['date']).add(
-              const Duration(hours: 9),
-            ),
-          );
-          // _imageurl = _detail['image'];
+          todo = await EchiRequest().retrieveTodo(_id);
+          titleController.text = todo!.title;
+          formValue['title'] = todo!.title;
+          contentController.text = todo!.content ?? '';
+          formValue['content'] = todo!.content;
+          dateController.text = dateformat.format(todo!.deadline);
+          formValue['deadline'] = todo!.deadline.toString();
+          timeController.text = timeformat.format(todo!.deadline);
           setState(() {});
         },
       );
@@ -146,6 +147,29 @@ class _FormPageStateWidget extends State<_FormPageWidget> {
                         }
                         return null;
                       },
+                      onSaved: (value) => formValue['title'] = value,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: contentController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: '内容',
+                        labelText: '内容',
+                        filled: true,
+                      ),
+                      validator: (contentValue) {
+                        if (contentValue == null || contentValue.isEmpty) {
+                          return '必須項目です';
+                        } else if (200 <= contentValue.length) {
+                          return '200文字までしか入力できません。';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) => formValue['content'] = value,
                     ),
                   ),
                   Padding(
@@ -172,11 +196,8 @@ class _FormPageStateWidget extends State<_FormPageWidget> {
                           firstDate: DateTime(DateTime.now().year),
                           lastDate: DateTime(DateTime.now().year + 1),
                         );
-                        if (selectedDate != null) {
-                          datestring =
-                              dateformat.format(selectedDate).toString();
-                        }
                         dateController.text = dateformat.format(selectedDate!);
+                        formValue['date'] = selectedDate;
                       },
                     ),
                   ),
@@ -202,92 +223,97 @@ class _FormPageStateWidget extends State<_FormPageWidget> {
                           context: context,
                           initialTime: TimeOfDay.now(),
                         );
-                        if (selectedTime != null) {
-                          if (selectedTime.minute < 10) {
-                            minute = '0${selectedTime.minute}';
-                          } else {
-                            minute = '${selectedTime.minute}';
-                          }
-                          if (selectedTime.hour > 9) {
-                            hour = '${selectedTime.hour}';
-                          } else {
-                            hour = '0${selectedTime.hour}';
-                          }
-                          timestring = '$hour:$minute';
-                        }
-                        timeController.text = timestring;
+                        final selectedValue = DateTime(
+                            DateTime.now().year,
+                            DateTime.now().month,
+                            DateTime.now().day,
+                            selectedTime!.hour,
+                            selectedTime.minute);
+                        timeController.text = timeformat.format(selectedValue);
+                        formValue['dayTime'] = selectedTime;
                       },
                     ),
                   ),
-                  // _image == null
-                  //     ? Padding(
-                  //         padding: const EdgeInsets.all(8.0),
-                  //         child: _imageurl == null
-                  //             ? const Text('画像が選択されていません。')
-                  //             : ConstrainedBox(
-                  //                 constraints: const BoxConstraints(
-                  //                     maxHeight: 300, maxWidth: 300),
-                  //                 child: Image.network(_imageurl!),
-                  //               ),
-                  //       )
-                  //     : Padding(
-                  //         padding: const EdgeInsets.all(8.0),
-                  //         child: ConstrainedBox(
-                  //           constraints: const BoxConstraints(
-                  //               maxHeight: 300, maxWidth: 300),
-                  //           child: Image.file(_image),
-                  //         ),
-                  //       ),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     ElevatedButton(
-                  //       style: ElevatedButton.styleFrom(
-                  //         primary: Colors.blue,
-                  //         onPrimary: Colors.white,
-                  //         shape: const CircleBorder(),
-                  //       ),
-                  //       onPressed: _getImagecamera,
-                  //       child: const Icon(Icons.camera_alt),
-                  //     ),
-                  //     ElevatedButton(
-                  //       style: ElevatedButton.styleFrom(
-                  //         primary: Colors.blue,
-                  //         onPrimary: Colors.white,
-                  //         shape: const CircleBorder(),
-                  //       ),
-                  //       onPressed: _getImagegallery,
-                  //       child: const Icon(Icons.photo),
-                  //     ),
-                  //   ],
-                  // ),
+                  Column(
+                    children: [
+                      if (formValue['image'] is MultipartFile)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Image.file(File(image!.path)),
+                        )
+                      else if (todo?.imagePath != null)
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Image.network(
+                            ApiRoot.staticPath().toString() + todo!.imagePath!,
+                          ),
+                        )
+                      else
+                        const Text('画像は選択されていません'),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            iconSize: 30,
+                            onPressed: () async {
+                              await getImageCamera();
+                            },
+                            icon: const Icon(Icons.camera),
+                          ),
+                          IconButton(
+                            iconSize: 30,
+                            onPressed: () async {
+                              await getImageGararry();
+                            },
+                            icon: const Icon(Icons.photo),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   ElevatedButton(
                     child: const Text('保存'),
                     onPressed: () async {
                       if (_formkey.currentState!.validate()) {
+                        _formkey.currentState!.save();
+                        if (!formValue.containsKey('deadline')) {
+                          formValue['deadline'] = DateTime(
+                            formValue['date'].year,
+                            formValue['date'].month,
+                            formValue['date'].day,
+                            formValue['dayTime'].hour,
+                            formValue['dayTime'].minute,
+                          ).toString();
+                          formValue.remove('date');
+                          formValue.remove('dayTime');
+                        }
                         uuid = FirebaseAuth.instance.currentUser?.uid ?? '';
-                        // _todouser = await DrfDatabase().userretrieve(uuid);
+                        _todouser = await EchiRequest().userRetrieve(uuid);
+                        formValue['owner'] = _todouser['myuuid'];
                         if (_id == '') {
                           // await Notificationoperation().notification();
-                          // await DrfDatabase().createtodo(
-                          //   titleController.text,
-                          //   '$datestring $timestring',
-                          //   _todouser['id'],
-                          //   // _requestimage,
-                          // );
+                          await EchiRequest().createTodo(formValue
+                              // titleController.text,
+                              // // '$datestring $timestring',
+                              // DateTime(),
+                              // _todouser['myuuid'],
+                              // _requestimage,
+                              );
                           await Navigator.of(context).pushNamedAndRemoveUntil(
                             '/home',
                             (_) => false,
                           );
                         } else {
                           // await Notificationoperation().notification();
-                          // await DrfDatabase().updatetodo(
-                          //   _id,
-                          //   titleController.text,
-                          //   '${dateController.text} ${timeController.text}',
-                          //   _todouser['id'],
-                          // _requestimage,
-                          // );
+                          await EchiRequest().updatetodo(
+                            formValue,
+                            _id,
+                            //   _id,
+                            //   titleController.text,
+                            //   '${dateController.text} ${timeController.text}',
+                            //   _todouser['myuuid'],
+                            //   // _requestimage,
+                          );
                           await Navigator.of(context).pushNamed(
                             '/detail',
                             arguments: _id,

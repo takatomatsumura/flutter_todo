@@ -42,9 +42,9 @@ class _UserDisplayStateWidget extends State<UserDisplayWidget> {
     Future(
       () async {
         _checkvalue = [];
-        _userlist = await DrfDatabase().userlist();
+        _userlist = await EchiRequest().userlist();
         _uuid = FirebaseAuth.instance.currentUser?.uid.toString() ?? '';
-        user = await DrfDatabase().userretrieve(_uuid);
+        user = await EchiRequest().userRetrieve(_uuid);
         _userlist.asMap().forEach(
           (index, value) {
             if (value['uuid'] == _uuid) {
@@ -110,7 +110,7 @@ class _UserDisplayStateWidget extends State<UserDisplayWidget> {
                       },
                     );
                     _truelist.add(userid);
-                    await DrfDatabase().userdisplayupdate(
+                    await EchiRequest().userdisplayupdate(
                       _truelist,
                       userid!,
                     );

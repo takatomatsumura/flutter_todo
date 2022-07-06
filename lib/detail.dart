@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'api_root.dart';
 import 'echo_handler.dart';
+import 'todo.dart';
 
 String _uuid = '';
 Map<String, dynamic> _user = {};
-Map<String, dynamic> _detail = {};
+Todo? _detail;
 Widget _editbutton = Container();
 
 class DetailPage extends StatefulWidget {
@@ -21,10 +23,10 @@ class _DetailPageState extends State<DetailPage> {
     Future(
       () async {
         final id = ModalRoute.of(context)!.settings.arguments;
-        _detail = await DrfDatabase().retrievetodo(id);
+        _detail = await EchiRequest().retrieveTodo(id);
         _uuid = FirebaseAuth.instance.currentUser?.uid.toString() ?? '';
-        _user = await DrfDatabase().userretrieve(_uuid);
-        if (_detail['owner']['id'] == _user['id']) {
+        _user = await EchiRequest().userRetrieve(_uuid);
+        if (_detail?.owner.uuid == _user['id']) {
           _editbutton = FloatingActionButton(
             onPressed: () {
               Navigator.pushNamed(
@@ -87,8 +89,8 @@ class Detail extends StatelessWidget {
     final id = ModalRoute.of(context)!.settings.arguments;
     return ListView(
       children: [
-        FutureBuilder<Map<String, dynamic>>(
-          future: DrfDatabase().retrievetodo(id),
+        FutureBuilder<Todo>(
+          future: EchiRequest().retrieveTodo(id),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               final data = snapshot.data;
@@ -113,10 +115,36 @@ class Detail extends StatelessWidget {
                           child: SizedBox(
                             width: 250,
                             child: Text(
-                              "${data!['title']}",
+                              data!.title,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 5,
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('内容：'),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            width: 250,
+                            child: data.content != null
+                                ? Text(
+                                    data.content!,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 5,
+                                  )
+                                : const Text(
+                                    '未登録',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 5,
+                                  ),
                           ),
                         ),
                       ],
@@ -131,13 +159,7 @@ class Detail extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            datetimeformat.format(
-                              DateTime.parse(
-                                data['date'],
-                              ).add(
-                                const Duration(hours: 9),
-                              ),
-                            ),
+                            datetimeformat.format(data.deadline),
                           ),
                         ),
                       ],
@@ -152,13 +174,13 @@ class Detail extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '${data['owner']['name']}',
+                            data.owner.name,
                           ),
                         ),
                       ],
                     ),
                     const Text('画像'),
-                    data['image'] == null
+                    data.imagePath == null
                         ? const Text('画像はありません')
                         : ConstrainedBox(
                             constraints: const BoxConstraints(
@@ -166,7 +188,7 @@ class Detail extends StatelessWidget {
                               maxHeight: 300,
                             ),
                             child: Image.network(
-                              data['image'],
+                              ApiRoot.staticPath().toString() + data.imagePath!,
                             ),
                           ),
                   ],

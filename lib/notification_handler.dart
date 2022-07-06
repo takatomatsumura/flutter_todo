@@ -12,10 +12,10 @@ class Notificationoperation {
     final preferences = await SharedPreferences.getInstance();
     final notificationbool = preferences.getBool('notificationbool') ?? true;
     if (notificationbool == true) {
-      final uuid = FirebaseAuth.instance.currentUser?.uid.toString();
-      final targetlength = await DrfDatabase().gettargetlength(uuid!);
+      final uuid = FirebaseAuth.instance.currentUser?.uid;
+      final targetlength = await EchiRequest().gettargetlength(uuid!);
       final notificationtarget =
-          await DrfDatabase().getnotificationtarget(uuid);
+          await EchiRequest().getnotificationtarget(uuid);
       var index = targetlength;
       if (notificationtarget.length != targetlength) {
         final flutterLocalNotificationsPlugin =

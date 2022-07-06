@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'echo_handler.dart';
-import 'notification_handler.dart';
+// import 'notification_handler.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -23,16 +23,17 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     Future(
       () async {
-        uuid = FirebaseAuth.instance.currentUser?.uid.toString() ?? '';
-        user = await DrfDatabase().userretrieve(uuid);
+        uuid = FirebaseAuth.instance.currentUser?.uid ?? '';
+        user = await EchiRequest().userRetrieve(uuid);
         setState(() {});
       },
     );
   }
 
   Future todoitem(int index) async {
-    items = await DrfDatabase().gettodolist(index, uuid);
-    overduelength = await DrfDatabase().getopacitylength(uuid);
+    uuid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    items = await EchiRequest().getTodoList(index, uuid);
+    overduelength = await EchiRequest().getopacitylength(uuid);
     return items;
   }
 
@@ -76,14 +77,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: Slidable(
                           actionPane: const SlidableDrawerActionPane(),
                           actionExtentRatio: 0.25,
-                          actions: items[index]['owner']['id'] == user['id']
+                          actions: items[index]['edges']['owner'][0]
+                                      ['myuuid'] ==
+                                  user['myuuid']
                               ? [
                                   IconSlideAction(
                                     caption: 'delete',
                                     color: Colors.red,
                                     icon: Icons.delete,
                                     onTap: () async {
-                                      await DrfDatabase()
+                                      await EchiRequest()
                                           .deletetodo(items[index]['id']);
                                       setState(() {});
                                     },
@@ -102,29 +105,31 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ]
                               : [],
-                          secondaryActions:
-                              items[index]['owner']['id'] == user['id']
-                                  ? [
-                                      IconSlideAction(
-                                        caption: 'done',
-                                        color: Colors.lime,
-                                        icon: Icons.check,
-                                        onTap: () async {
-                                          await DrfDatabase().boolchange(
-                                            items[index]['id'],
-                                            boolvalue: true,
-                                          );
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ]
-                                  : [],
+                          secondaryActions: items[index]['edges']['owner'][0]
+                                      ['myuuid'] ==
+                                  user['myuuid']
+                              ? [
+                                  IconSlideAction(
+                                    caption: 'done',
+                                    color: Colors.lime,
+                                    icon: Icons.check,
+                                    onTap: () async {
+                                      await EchiRequest().boolchange(
+                                        items[index]['id'],
+                                        boolvalue: true,
+                                      );
+                                      setState(() {});
+                                    },
+                                  ),
+                                ]
+                              : [],
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor:
-                                  items[index]['owner']['id'] == user['id']
-                                      ? Colors.indigo
-                                      : Colors.purple,
+                              backgroundColor: items[index]['edges']['owner'][0]
+                                          ['myuuid'] ==
+                                      user['myuuid']
+                                  ? Colors.indigo
+                                  : Colors.purple,
                             ),
                             title: Text(
                               'タイトル：${items[index]['title']}',
@@ -132,7 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               maxLines: 2,
                             ),
                             subtitle: Text(
-                                '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['date']).add(const Duration(hours: 9)))}\n作成者　: ${items[index]['owner']['name']}'''),
+                                '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['deadline']))}\n作成者　: ${items[index]['edges']['owner'][0]['name']}'''),
                             onTap: () {
                               Navigator.pushNamed(
                                 context,
@@ -147,17 +152,18 @@ class _MyHomePageState extends State<MyHomePage> {
                       return Slidable(
                         actionPane: const SlidableDrawerActionPane(),
                         actionExtentRatio: 0.25,
-                        actions: items[index]['owner']['id'] == user['id']
+                        actions: items[index]['edges']['owner'][0]['myuuid'] ==
+                                user['myuuid']
                             ? [
                                 IconSlideAction(
                                   caption: 'delete',
                                   color: Colors.red,
                                   icon: Icons.delete,
                                   onTap: () async {
-                                    await DrfDatabase()
+                                    await EchiRequest()
                                         .deletetodo(items[index]['id']);
-                                    await Notificationoperation()
-                                        .notification();
+                                    // await Notificationoperation()
+                                    // .notification();
                                     setState(() {});
                                   },
                                 ),
@@ -175,31 +181,33 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ]
                             : [],
-                        secondaryActions:
-                            items[index]['owner']['id'] == user['id']
-                                ? [
-                                    IconSlideAction(
-                                      caption: 'done',
-                                      color: Colors.lime,
-                                      icon: Icons.check,
-                                      onTap: () async {
-                                        await DrfDatabase().boolchange(
-                                          items[index]['id'],
-                                          boolvalue: true,
-                                        );
-                                        await Notificationoperation()
-                                            .notification();
-                                        setState(() {});
-                                      },
-                                    ),
-                                  ]
-                                : [],
+                        secondaryActions: items[index]['edges']['owner'][0]
+                                    ['myuuid'] ==
+                                user['myuuid']
+                            ? [
+                                IconSlideAction(
+                                  caption: 'done',
+                                  color: Colors.lime,
+                                  icon: Icons.check,
+                                  onTap: () async {
+                                    await EchiRequest().boolchange(
+                                      items[index]['id'],
+                                      boolvalue: true,
+                                    );
+                                    // await Notificationoperation()
+                                    //     .notification();
+                                    setState(() {});
+                                  },
+                                ),
+                              ]
+                            : [],
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor:
-                                items[index]['owner']['id'] == user['id']
-                                    ? Colors.indigo
-                                    : Colors.purple,
+                            backgroundColor: items[index]['edges']['owner'][0]
+                                        ['myuuid'] ==
+                                    user['myuuid']
+                                ? Colors.indigo
+                                : Colors.purple,
                           ),
                           title: Text(
                             "タイトル：${items[index]['title']}",
@@ -207,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             maxLines: 2,
                           ),
                           subtitle: Text(
-                              '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['date']).add(const Duration(hours: 9)))}\n作成者　: ${items[index]['owner']['name']}'''),
+                              '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['deadline']))}\n作成者　: ${items[index]['edges']['owner'][0]['name']}'''),
                           onTap: () {
                             Navigator.pushNamed(
                               context,
@@ -233,32 +241,34 @@ class _MyHomePageState extends State<MyHomePage> {
                     return Slidable(
                       actionPane: const SlidableDrawerActionPane(),
                       actionExtentRatio: 0.25,
-                      secondaryActions: items[index]['owner']['id'] ==
-                              user['id']
+                      secondaryActions: items[index]['edges']['owner'][0]
+                                  ['myuuid'] ==
+                              user['myuuid']
                           ? [
                               IconSlideAction(
                                 caption: 'cancel',
                                 color: Colors.blue,
                                 icon: Icons.cancel,
                                 onTap: () async {
-                                  await DrfDatabase().boolchange(
+                                  await EchiRequest().boolchange(
                                     items[index]['id'],
                                     boolvalue: false,
                                   );
-                                  await Notificationoperation().notification();
+                                  // await Notificationoperation().notification();
                                   setState(() {});
                                 },
                               ),
                             ]
                           : [],
-                      actions: items[index]['owner']['id'] == user['id']
+                      actions: items[index]['edges']['owner'][0]['myuuid'] ==
+                              user['myuuid']
                           ? [
                               IconSlideAction(
                                 caption: 'delete',
                                 color: Colors.red,
                                 icon: Icons.delete,
                                 onTap: () async {
-                                  await DrfDatabase()
+                                  await EchiRequest()
                                       .deletetodo(items[index]['id']);
                                   setState(() {});
                                 },
@@ -279,10 +289,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           : [],
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor:
-                              items[index]['owner']['id'] == user['id']
-                                  ? Colors.indigo
-                                  : Colors.purple,
+                          backgroundColor: items[index]['edges']['owner'][0]
+                                      ['myuuid'] ==
+                                  user['myuuid']
+                              ? Colors.indigo
+                              : Colors.purple,
                         ),
                         title: Text(
                           "タイトル：${items[index]['title']}",
@@ -290,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           maxLines: 2,
                         ),
                         subtitle: Text(
-                            '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['date']).add(const Duration(hours: 9)))}\n作成者　: ${items[index]['owner']['name']}'''),
+                            '''〆切日時: ${datetimeformat.format(DateTime.parse(items[index]['deadline']))}\n作成者　: ${items[index]['edges']['owner'][0]['name']}'''),
                         onTap: () {
                           Navigator.pushNamed(
                             context,

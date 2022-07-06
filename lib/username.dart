@@ -45,7 +45,7 @@ class _UserNameStateWidget extends State<UserNameWidget> {
     Future(
       () async {
         _uuid = FirebaseAuth.instance.currentUser?.uid.toString();
-        _user = await DrfDatabase().userretrieve(_uuid);
+        _user = await EchiRequest().userRetrieve(_uuid);
         if (_user != null) {
           setState(
             () {
@@ -90,9 +90,9 @@ class _UserNameStateWidget extends State<UserNameWidget> {
             child: const Text('保存'),
             onPressed: () async {
               if (_formkey.currentState!.validate()) {
-                await DrfDatabase().usernameupdate(
+                await EchiRequest().usernameUpdate(
                   _nameController.text,
-                  _user['id'],
+                  _user['myuuid'],
                 );
                 Navigator.pushNamedAndRemoveUntil(
                   context,

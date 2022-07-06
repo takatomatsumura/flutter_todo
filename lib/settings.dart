@@ -81,24 +81,31 @@ class _SettingPageStateWidget extends State<SettingPageWidget> {
               ),
             ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                '/user',
-              );
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.person),
-                Text(
-                  'ユーザー設定',
-                  style: TextStyle(
-                    fontSize: 20,
-                  ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/user',
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.person),
+                    Text(
+                      'ユーザー設定',
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
